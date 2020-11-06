@@ -25,30 +25,38 @@ class TodoListState extends State<TodoList> {
     }
   }
 
-  // Build the whole list of todo items
-  Widget _buildTodoList() {
-    return new ListView.builder(
-      itemBuilder: (context, index) {
-        // itemBuilder will be automatically be called as many times as it takes for the
-        // list to fill up its available space, which is most likely more than the
-        // number of todo items we have. So, we need to check the index is OK.
-        if (index < _todoItems.length) {
-          return _buildTodoItem(_todoItems[index], index);
-        }
-      },
-    );
-  }
+  List<ListTile> getListItems() => _todoItems
+      .asMap()
+      .map((i, item) => MapEntry(i, buildTenableListTile(item, i)))
+      .values
+      .toList();
 
-  // Build a single todo item
-  Widget _buildTodoItem(String todoText, int index) {
-    return new ListTile(
-        title: new Text(todoText), onTap: () => _promptRemoveTodoItem(index));
+  ListTile buildTenableListTile(String item, int index) {
+    return ListTile(
+      key: ValueKey(item),
+      title: Text(item),
+      leading: Text("#${index + 1}"),
+    );
   }
 
   Widget build(BuildContext context) {
     return new Scaffold(
       appBar: new AppBar(title: new Text('Todo List')),
-      body: _buildTodoList(),
+      body: ReorderableListView(
+        children: getListItems(),
+        onReorder: (oldIndex, newIndex) {
+          if (newIndex > oldIndex) {
+            newIndex -= 1;
+          }
+
+          setState(() {
+            String game = _todoItems[oldIndex];
+
+            _todoItems.removeAt(oldIndex);
+            _todoItems.insert(newIndex, game);
+          });
+        },
+      ),
       floatingActionButton: new FloatingActionButton(
           onPressed:
               _pushAddTodoScreen, // pressing this button now opens the new screen
